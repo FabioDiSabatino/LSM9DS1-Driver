@@ -472,26 +472,49 @@ extern "C" {
 
 
 /* Exported Types -------------------------------------------------------------*/
-/** @defgroup LPS25HB_Exported_Types
+/** @defgroup LSM9DS1_Exported_Types
 * @{
 */
+
 
 /**
 * @brief  Error type.
 */
 typedef enum {
-	LSM9DS1_OK = 0x00U,					// Accelerometer, Gyroscope and Magnetometer connection are fine
-	LSM9DS1_ERROR =0x01U,
+	LSM9DS1_ERROR =0x00U,
+	LSM9DS1_OK = 0x01U,					// Accelerometer, Gyroscope and Magnetometer connection are fine
 	LSM9DS1_XLG_ERROR=0x02U,			//Accelerometer and gyroscope connection error
 	LSM9DS1_XLG_OK=0x03U,
 	LSM9DS1_M_ERROR= 0x04U, 			//Magnetometer connection error
 	LSM9DS1_M_OK=0x05U} LSM9DS1_State_Connection;
+
+
+
 
 /**
 * @brief  Enable/Disable type.
 */
 typedef enum {LSM9DS1_DISABLE = (uint8_t)0, LSM9DS1_ENABLE = !LSM9DS1_DISABLE} LSM9DS1_State_et;
 #define IS_LSM9DS1_State(MODE) ((MODE == LSM9DS1_ENABLE) || (MODE == LSM9DS1_DISABLE) )
+
+/**
+* @brief  Accelerometer start Success/Error type.
+*/
+typedef enum {
+	LSM9DS1_XL_START_ERROR = 0x00U,
+	LSM9DS1_XL_START_SUCCESS = 0x01U,
+	LSM9DS1_XL_START_ERROR_ODR = 0x02U,
+	LSM9DS1_XL_START_ERROR_FS = 0x03U,
+} LSM9DS1_XL_START;
+
+/**
+* @brief  Accelerometer read Success/Error type.
+*/
+typedef enum {
+	LSM9DS1_XL_READ_ERROR = 0x00U,
+	LSM9DS1_XL_READ_SUCCESS = 0x01U,
+} LSM9DS1_XL_READ;
+
 
 
 /**
@@ -507,18 +530,46 @@ static uint32_t I2C_Timeout = 0x1000;
 
 
 
+/** @brief LSM9DS1_XL_SENSITIVITY Accelerometer sensitivity values based on selected full scale
+ * @{
+ */
+
+#define LSM6DS3_ACC_SENSITIVITY_FOR_FS_2G   0.061  /**< Sensitivity value for 2 g full scale [mg/LSB] */
+#define LSM6DS3_ACC_SENSITIVITY_FOR_FS_4G   0.122  /**< Sensitivity value for 4 g full scale [mg/LSB] */
+#define LSM6DS3_ACC_SENSITIVITY_FOR_FS_8G   0.244  /**< Sensitivity value for 8 g full scale [mg/LSB] */
+#define LSM6DS3_ACC_SENSITIVITY_FOR_FS_16G  0.488  /**< Sensitivity value for 16 g full scale [mg/LSB] */
 
 
 
-/** @defgroup LPS25HB_Private_Function_Prototypes
+/** @defgroup LSM9DS1_Private_Function_Prototypes
 * @{
 */
 static uint8_t I2C_ReadData(uint8_t B_Addr, uint8_t Reg, uint8_t* pBuffer, uint16_t Size);
 
+static uint8_t I2C_WriteData(uint8_t B_Addr, uint8_t Reg, uint8_t* pBuffer, uint16_t Size);
+
+static uint32_t lsm9ds1_midpoint(uint32_t a, uint32_t b);
+
+
+
+/** @defgroup LSM9DS1_Private_Accelerometer_Function_Prototypes
+* @{
+*/
+static int LSM9DS1_XL_SetOdr(int odr);
+static int LSM9DS1_XL_SetFs(int fullscale);
+
+
 
 LSM9DS1_State_Connection LSM9DS1_IsConnected();
 
+typedef struct{
+	uint32_t axis_x;
+	uint32_t axis_y;
+	uint32_t axis_z;
+}SensorAxes_t;
 
+LSM9DS1_XL_START LSM9DS1_XL_Start(int odr, int fs);
+LSM9DS1_XL_READ LSM9DS1_Read_XL( SensorAxes_t *acceleration);
 
 
 
