@@ -456,6 +456,7 @@
 
 /* Accelerometer and gyroscope Base address I2C */
 #define LSM9DS1_I2C_BADD_XLG					(uint8_t)0xd6
+#define LSM9DS1_IC2_BADD_XLG_W					(uint8_t)0xd7
 
 /* Magnetometer Base address I2C */
 #define LSM9DS1_I2C_BADD_M 						(uint8_t)0x3c
@@ -515,6 +516,14 @@ typedef enum {
 	LSM9DS1_XL_READ_SUCCESS = 0x01U,
 } LSM9DS1_XL_READ;
 
+/**
+* @brief  Accelerometer write Success/Error type.
+*/
+typedef enum {
+	LSM9DS1_MEM_WRITE_ERROR = 0x00U,
+	LSM9DS1_MEM_WRITE_SUCCESS = 0x01U,
+} LSM9DS1_MEM_WRITE;
+
 
 
 /**
@@ -526,7 +535,7 @@ typedef enum {
 /** @defgroup LPS25HB_Private_Variables
 * @{
 */
-static uint32_t I2C_Timeout = 0x1000;
+static uint32_t I2C_Timeout = 0x10000;
 
 
 
@@ -557,19 +566,23 @@ static uint32_t lsm9ds1_midpoint(uint32_t a, uint32_t b);
 */
 static int LSM9DS1_XL_SetOdr(int odr);
 static int LSM9DS1_XL_SetFs(int fullscale);
+static LSM9DS1_MEM_WRITE LSM9DS1_modifyReg8(uint8_t B_Addr,uint8_t Reg, uint8_t pBuffer, uint8_t mask);
 
-
+uint8_t LSM9DS1_get_Odr();
 
 LSM9DS1_State_Connection LSM9DS1_IsConnected();
 
-typedef struct{
-	uint32_t axis_x;
-	uint32_t axis_y;
-	uint32_t axis_z;
-}SensorAxes_t;
+
 
 LSM9DS1_XL_START LSM9DS1_XL_Start(int odr, int fs);
-LSM9DS1_XL_READ LSM9DS1_Read_XL( SensorAxes_t *acceleration);
+
+struct  SensorAxes_t{
+	double axis_x;
+	double axis_y;
+	double axis_z;
+};
+
+LSM9DS1_XL_READ LSM9DS1_Read_XL(struct SensorAxes_t *acceleration,int samples);
 
 
 
