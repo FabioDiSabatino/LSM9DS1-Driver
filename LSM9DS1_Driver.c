@@ -105,6 +105,15 @@ static uint32_t lsm9ds1_midpoint(uint32_t a, uint32_t b)
   return (uint32_t)(((uint64_t)a + (uint64_t)b + (uint64_t)1) / (uint64_t)2);
 }
 
+void LSM9DS1_XLG_TurnOff()
+{
+	uint8_t offBits=0;
+
+	I2C_WriteData(LSM9DS1_I2C_BADD,LSM9DS1_CTRL_REG6_XL,&offBits,1);
+	I2C_WriteData(LSM9DS1_I2C_BADD,LSM9DS1_CTRL_REG1_G,&offBits,1);
+
+
+}
 
 /****************************************************************************
  * Name: LSM9DS1_XL_SetOdr
@@ -149,21 +158,56 @@ static int LSM9DS1_XL_SetOdr(int odr)
 		    }
 
 		 //Set power mode and ODR
-		 return LSM9DS1_modifyReg8(LSM9DS1_I2C_BADD_XLG,LSM9DS1_CTRL_REG6_XL,setbits,LSM9DS1_CTRL_REG6_XL_ODR_XL_MASK);
+		 return LSM9DS1_modifyReg8(LSM9DS1_I2C_BADD,LSM9DS1_CTRL_REG6_XL,setbits,LSM9DS1_CTRL_REG6_XL_ODR_XL_MASK);
 
 
 
 }
 
 
-uint8_t LSM9DS1_get_Odr(){
+static int LSM9DS1_G_SetOdr(int odr){
+	  uint8_t setbits;
+
+		  if ( odr < lsm9ds1_midpoint(14, 59))
+		     {
+		       setbits = LSM9DS1_CTRL_REG1_G_ODR_G_14p9HZ;
+		     }
+		   else if (odr < lsm9ds1_midpoint(59, 119))
+		     {
+		       setbits = LSM9DS1_CTRL_REG1_G_ODR_G_59p5HZ;
+		     }
+		   else if (odr < lsm9ds1_midpoint(119, 238))
+		     {
+		       setbits = LSM9DS1_CTRL_REG1_G_ODR_G_119HZ;
+		     }
+		   else if (odr < lsm9ds1_midpoint(238, 476))
+		     {
+		       setbits = LSM9DS1_CTRL_REG1_G_ODR_G_238HZ;
+		     }
+		   else if (odr < lsm9ds1_midpoint(476, 952))
+		     {
+		       setbits = LSM9DS1_CTRL_REG1_G_ODR_G_476HZ;
+		     }
+		   else
+		     {
+		       setbits = LSM9DS1_CTRL_REG1_G_ODR_G_952HZ;
+		     }
+
+
+		  //Set full-scale
+		return LSM9DS1_modifyReg8(LSM9DS1_I2C_BADD,LSM9DS1_CTRL_REG1_G,setbits,LSM9DS1_CTRL_REG1_G_ODR_G_MASK );
+
+}
+
+uint8_t LSM9DS1_get_Odr_XL(){
+
 	uint8_t odr;
 
 
-	if(I2C_ReadData(LSM9DS1_I2C_BADD_XLG,LSM9DS1_CTRL_REG6_XL,&odr,1))
+	if(I2C_ReadData(LSM9DS1_I2C_BADD,LSM9DS1_CTRL_REG6_XL,&odr,1))
 	{
 	    odr= odr & LSM9DS1_CTRL_REG6_XL_ODR_XL_MASK;
-	    odr= odr << LSM9DS1_CTRL_REG6_XL_ODR_XL_MASK;
+	    odr= odr >> LSM9DS1_CTRL_REG6_XL_ODR_XL_SHIFT;
 
 	    if (odr == 1)
 	     {
@@ -201,6 +245,157 @@ uint8_t LSM9DS1_get_Odr(){
 	}
 }
 
+uint8_t LSM9DS1_get_Odr_G(){
+	uint8_t odr;
+
+
+	if(I2C_ReadData(LSM9DS1_I2C_BADD,LSM9DS1_CTRL_REG1_G,&odr,1))
+	{
+	    odr= odr & LSM9DS1_CTRL_REG1_G_ODR_G_MASK;
+	    odr= odr >> LSM9DS1_CTRL_REG1_G_ODR_G_SHIFT;
+
+	    if (odr == 1)
+	     {
+	    	return LSM9DS1_CTRL_REG1_G_ODR_G_14p9HZ;
+	     }
+	    else if (odr == 2)
+	    {
+	    	return LSM9DS1_CTRL_REG1_G_ODR_G_59p5HZ;
+	    }
+	    else if (odr == 3)
+	    {
+	    return LSM9DS1_CTRL_REG1_G_ODR_G_119HZ;
+	    }
+	    else if (odr == 4)
+	    {
+	    	return LSM9DS1_CTRL_REG1_G_ODR_G_238HZ;
+	    }
+	    else if (odr == 5)
+	    {
+	    	return LSM9DS1_CTRL_REG1_G_ODR_G_476HZ;
+	    }
+	    else if (odr == 6)
+	    {
+	      return LSM9DS1_CTRL_REG1_G_ODR_G_952HZ;
+	    }
+	    else
+	    {
+	    	return LSM9DS1_CTRL_REG1_G_ODR_G_POWERDOWN;
+	    }
+
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+uint8_t LSM9DS1_get_Fs_XL(){
+
+	uint8_t fs;
+
+	if(I2C_ReadData(LSM9DS1_I2C_BADD,LSM9DS1_CTRL_REG6_XL,&fs,1))
+		{
+		    fs= fs & LSM9DS1_CTRL_REG6_XL_FS_XL_MASK;
+		    fs= fs >> LSM9DS1_CTRL_REG6_XL_FS_XL_SHIFT;
+
+
+		    if (fs == 1)
+		    {
+		    	return LSM9DS1_CTRL_REG6_XL_FS_XL_16G;
+		    }
+		    else if (fs == 2)
+		    {
+		    return LSM9DS1_CTRL_REG6_XL_FS_XL_4G;
+		    }
+		    else if (fs == 3)
+		    {
+		    	return LSM9DS1_CTRL_REG6_XL_FS_XL_8G;
+		    }
+		    else
+		    {
+		    	return LSM9DS1_CTRL_REG6_XL_FS_XL_2G;
+		    }
+
+		}
+		else
+		{
+			return 0;
+		}
+}
+
+uint8_t LSM9DS1_get_Sens_XL(){
+
+	uint8_t fs= LSM9DS1_get_Fs_XL();
+
+		    if (fs == LSM9DS1_CTRL_REG6_XL_FS_XL_16G)
+		    {
+		    	return LSM9DS1_ACC_SENSITIVITY_FOR_FS_16G;
+		    }
+		    else if (fs == LSM9DS1_CTRL_REG6_XL_FS_XL_4G)
+		    {
+		    return LSM9DS1_ACC_SENSITIVITY_FOR_FS_4G;
+		    }
+		    else if (fs == LSM9DS1_CTRL_REG6_XL_FS_XL_8G)
+		    {
+		    	return LSM9DS1_ACC_SENSITIVITY_FOR_FS_8G;
+		    }
+		    else
+		    {
+		    	return LSM9DS1_ACC_SENSITIVITY_FOR_FS_2G;
+		    }
+
+}
+
+uint8_t LSM9DS1_get_Fs_G(){
+
+	uint8_t fs;
+
+	if(I2C_ReadData(LSM9DS1_I2C_BADD,LSM9DS1_CTRL_REG1_G,&fs,1))
+		{
+		    fs= fs & LSM9DS1_CTRL_REG1_G_FS_G_MASK;
+		    fs= fs >> LSM9DS1_CTRL_REG1_G_FS_G_SHIFT;
+
+
+		    if (fs == 1)
+		    {
+		    	return LSM9DS1_CTRL_REG1_G_FS_G_500DPS;
+		    }
+		    else if (fs == 3)
+		    {
+		    return LSM9DS1_CTRL_REG1_G_FS_G_2000DPS;
+		    }
+		    else
+		    {
+		    	return LSM9DS1_CTRL_REG1_G_FS_G_245DPS;
+		    }
+
+		}
+		else
+		{
+			return 0;
+		}
+}
+
+uint8_t LSM9DS1_get_Sens_G(){
+
+	uint8_t fs= LSM9DS1_get_Fs_G();
+
+		    if (fs == LSM9DS1_CTRL_REG1_G_FS_G_500DPS)
+		    {
+		    	return LSM9DS1_GYRO_SENSITIVITY_FOR_FS_500DPS;
+		    }
+		    else if (fs == LSM9DS1_CTRL_REG1_G_FS_G_2000DPS)
+		    {
+		    	return LSM9DS1_GYRO_SENSITIVITY_FOR_FS_2000DPS;
+		    }
+		    else
+		    {
+		    	return LSM9DS1_GYRO_SENSITIVITY_FOR_FS_245DPS;
+		    }
+
+}
+
 
 /****************************************************************************
  * Name: LSM9DS1_XL_SetFs
@@ -236,13 +431,34 @@ static int LSM9DS1_XL_SetFs(int fullscale)
 		   setbits = LSM9DS1_CTRL_REG6_XL_FS_XL_16G;
 	     }
 	  //Set full-scale
-	return LSM9DS1_modifyReg8(LSM9DS1_I2C_BADD_XLG,LSM9DS1_CTRL_REG6_XL,setbits,LSM9DS1_CTRL_REG6_XL_FS_XL_MASK );
+	return LSM9DS1_modifyReg8(LSM9DS1_I2C_BADD,LSM9DS1_CTRL_REG6_XL,setbits,LSM9DS1_CTRL_REG6_XL_FS_XL_MASK );
 
 
 
 
 }
 
+static int LSM9DS1_G_SetFs(int fullscale)
+{
+	  uint8_t setbits;
+
+	  if (fullscale < lsm9ds1_midpoint(245, 500))
+	     {
+	       setbits = LSM9DS1_CTRL_REG1_G_FS_G_245DPS;
+	     }
+	   else if (fullscale < lsm9ds1_midpoint(500, 2000))
+	     {
+	       setbits = LSM9DS1_CTRL_REG1_G_FS_G_500DPS;
+	     }
+	   else
+	     {
+	       setbits = LSM9DS1_CTRL_REG1_G_FS_G_2000DPS;
+	     }
+
+
+	  //Set full-scale
+	return LSM9DS1_modifyReg8(LSM9DS1_I2C_BADD,LSM9DS1_CTRL_REG1_G,setbits,LSM9DS1_CTRL_REG1_G_FS_G_MASK );
+}
 
 /****************************************************************************
  * Name: lsm9ds1accel_start
@@ -272,17 +488,42 @@ static int LSM9DS1_XL_SetFs(int fullscale)
 }
 
 
+ LSM9DS1_XLG_START LSM9DS1_XLG_Start(int odr, int fsG, int fsXl )
+ {
+
+	 if(LSM9DS1_G_SetOdr(odr))
+	 {
+		 if(LSM9DS1_XL_SetOdr(odr))
+		{
+			 if(LSM9DS1_XL_SetFs(fsXl))
+			 {
+			 	if(LSM9DS1_G_SetFs(fsG))
+			 	  {
+			 		return LSM9DS1_XLG_START_SUCCESS;
+			 	   }
+			 	else
+			 	    return LSM9DS1_XLG_START_ERROR_FS;
+			 }
+			 else
+			    return LSM9DS1_XL_START_ERROR_FS;
+		 }
+		 else
+			 return LSM9DS1_XLG_START_ERROR;
+
+	 }
+	 else
+		 return LSM9DS1_XLG_START_ERROR;
+ }
 
 
 
-
- LSM9DS1_XL_READ LSM9DS1_Read_XL(struct SensorAxes_t *acceleration,int samples)
+LSM9DS1_XL_READ LSM9DS1_Read_XL(struct SensorXLAxes_t *acceleration,int samples)
 {
 	  int16_t pData[3]={0,0,0};
 	  int16_t data=0;
 	  int8_t regadd;
 	  int i,j,k;
-	  float sensitivity= ( float )LSM6DS3_ACC_SENSITIVITY_FOR_FS_2G;
+	  float sensitivity= ( float )LSM9DS1_ACC_SENSITIVITY_FOR_FS_2G;
 
 	  uint8_t hi;
 	  uint8_t lo;
@@ -296,13 +537,13 @@ static int LSM9DS1_XL_SetFs(int fullscale)
 
 	     for (j = 0; j < 3; j++ )
 	     {
-	       if( !I2C_ReadData(LSM9DS1_I2C_BADD_XLG, regadd, &lo,1))
+	       if( !I2C_ReadData(LSM9DS1_I2C_BADD, regadd, &lo,1))
 	       {
 		         return LSM9DS1_XL_READ_ERROR ;
 
 	       }
 	       regadd++;
-	       if( !I2C_ReadData(LSM9DS1_I2C_BADD_XLG,regadd, &hi,1))
+	       if( !I2C_ReadData(LSM9DS1_I2C_BADD,regadd, &hi,1))
 	       {
 	    	   return LSM9DS1_XL_READ_ERROR ;
 	       }
@@ -343,6 +584,118 @@ static int LSM9DS1_XL_SetFs(int fullscale)
 
 }
 
+LSM9DS1_XLG_READ LSM9DS1_Read_XLG(struct SensorXLAxes_t *linearAcc, struct SensorGAxes_t *angularAcc, int samples)
+{
+	  int16_t pData[6]={0,0,0,0,0,0};
+	  int16_t data=0;
+	  int8_t regadd;
+	  int i,j,k;
+	  float sensitivityXL= ( float )LSM9DS1_get_Sens_XL();
+	  float sensitivityG= (float) LSM9DS1_get_Sens_G();
+
+	  uint8_t hi;
+	  uint8_t lo;
+
+
+
+	  /* Read output registers from LSM9DS1_OUT_X_L_G to LSM9DS1_OUT_Z_XL. */
+	   for (i = 0; i < samples; i++ )
+	   {
+		   regadd=LSM9DS1_OUT_X_L_G;
+
+		  //read Gyroscope output
+	     for (j = 0; j < 3; j++ )
+	     {
+	       if( !I2C_ReadData(LSM9DS1_I2C_BADD, regadd, &lo,1))
+	       {
+		         return 0;
+
+	       }
+	       regadd++;
+	       if( !I2C_ReadData(LSM9DS1_I2C_BADD,regadd, &hi,1))
+	       {
+	    	   return 0 ;
+	       }
+	       regadd++;
+
+	       data = ((uint16_t)hi << 8) | (uint16_t)lo;
+	       /* The value is positive */
+	       if (data < 0x8000)
+	          {
+	           pData[j] = (int16_t)data;
+	          }
+
+	       /* The value is negative, so find its absolute value by taking the
+	        * two's complement
+	        */
+	       else if (data > 0x8000)
+	       {
+	         data = ~data + 1;
+	         pData[j] = -(int16_t)data;
+	       }
+
+	       /* The value is negative and can't be represented as a positive
+	        * int16_t value
+	        */
+	       else
+	        {
+	           pData[j] = (int16_t)(-32768);
+	        }
+
+	     }
+	     /* Format the data. */
+	     angularAcc->axis_x = ( int32_t ) (pData[0] * sensitivityG )/1000;
+	     angularAcc->axis_y = ( int32_t ) (pData[1] * sensitivityG )/1000;
+	     angularAcc->axis_z = ( int32_t )(pData[2] * sensitivityG )/1000;
+
+	     regadd=LSM9DS1_OUT_X_L_XL;
+	     //read Accelerometer output
+	   	 for (j = 3; j < 6; j++ )
+	   	 {
+	   	  if( !I2C_ReadData(LSM9DS1_I2C_BADD, regadd, &lo,1))
+	   	  {
+	   		   return 0;
+	   	  }
+	   	  regadd++;
+	   	  if( !I2C_ReadData(LSM9DS1_I2C_BADD,regadd, &hi,1))
+	   	  {
+	   	       return 0 ;
+	   	  }
+	   	  regadd++;
+
+	   	  data = ((uint16_t)hi << 8) | (uint16_t)lo;
+	   	  /* The value is positive */
+	   	  if (data < 0x8000)
+	   	  {
+	   	       pData[j] = (int16_t)data;
+	   	  }
+
+	   	  /* The value is negative, so find its absolute value by taking the
+	   	   * two's complement
+	   	   */
+	   	  else if (data > 0x8000)
+	   	  {
+	   	       data = ~data + 1;
+	   	       pData[j] = -(int16_t)data;
+	   	  }
+	   	  /* The value is negative and can't be represented as a positive
+	   	  * int16_t value
+	   	  */
+	   	  else
+	   	  {
+	   	       pData[j] = (int16_t)(-32768);
+	   	  }
+
+	   	 }
+	   	     /* Format the data. */
+	   	     linearAcc->axis_x = ( int32_t ) (pData[3] * sensitivityXL);
+	   	     linearAcc->axis_y = ( int32_t ) (pData[4] * sensitivityXL);
+	   	     linearAcc->axis_z = ( int32_t )(pData[5] * sensitivityXL);
+	   }
+	    return 1;
+}
+
+
 
 
  LSM9DS1_State_Connection LSM9DS1_IsConnected()
@@ -350,9 +703,9 @@ static int LSM9DS1_XL_SetFs(int fullscale)
 
  		uint8_t resultXLG[1];
  		uint8_t resultM[1];
- 	if(I2C_ReadData(LSM9DS1_I2C_BADD_XLG,LSM9DS1_WHO_AM_I,&resultXLG[0],1))
+ 	if(I2C_ReadData(LSM9DS1_I2C_BADD,LSM9DS1_WHO_AM_I,&resultXLG[0],1))
  	{
- 		if (I2C_ReadData(LSM9DS1_I2C_BADD_M,LSM9DS1_WHO_AM_I_M,&resultM[0],1))
+ 		if (I2C_ReadData(LSM9DS1_I2C_BADD,LSM9DS1_WHO_AM_I_M,&resultM[0],1))
  		{
  			if(resultXLG[0] == LSM9DS1_WHO_AM_I_VALUE)
  			{

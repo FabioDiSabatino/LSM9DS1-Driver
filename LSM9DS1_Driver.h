@@ -455,11 +455,8 @@
 
 
 /* Accelerometer and gyroscope Base address I2C */
-#define LSM9DS1_I2C_BADD_XLG					(uint8_t)0xd6
-#define LSM9DS1_IC2_BADD_XLG_W					(uint8_t)0xd7
+#define LSM9DS1_I2C_BADD						(uint8_t)0xd6
 
-/* Magnetometer Base address I2C */
-#define LSM9DS1_I2C_BADD_M 						(uint8_t)0x3c
 
 
 
@@ -508,6 +505,13 @@ typedef enum {
 	LSM9DS1_XL_START_ERROR_FS = 0x03U,
 } LSM9DS1_XL_START;
 
+typedef enum {
+	LSM9DS1_XLG_START_ERROR = 0x00U,
+	LSM9DS1_XLG_START_SUCCESS = 0x01U,
+	LSM9DS1_XLG_START_ERROR_ODR = 0x02U,
+	LSM9DS1_XLG_START_ERROR_FS = 0x03U,
+} LSM9DS1_XLG_START;
+
 /**
 * @brief  Accelerometer read Success/Error type.
 */
@@ -515,7 +519,20 @@ typedef enum {
 	LSM9DS1_XL_READ_ERROR = 0x00U,
 	LSM9DS1_XL_READ_SUCCESS = 0x01U,
 } LSM9DS1_XL_READ;
-
+/**
+* @brief  Gyrscope read Success/Error type.
+*/
+typedef enum {
+	LSM9DS1_G_READ_ERROR = 0x00U,
+	LSM9DS1_G_READ_SUCCESS = 0x01U,
+} LSM9DS1_G_READ;
+/**
+* @brief  Gyrscope read Success/Error type.
+*/
+typedef enum {
+	LSM9DS1_XLG_READ_ERROR = 0x00U,
+	LSM9DS1_XLG_READ_SUCCESS = 0x01U,
+} LSM9DS1_XLG_READ;
 /**
 * @brief  Accelerometer write Success/Error type.
 */
@@ -543,11 +560,18 @@ static uint32_t I2C_Timeout = 0x10000;
  * @{
  */
 
-#define LSM6DS3_ACC_SENSITIVITY_FOR_FS_2G   0.061  /**< Sensitivity value for 2 g full scale [mg/LSB] */
-#define LSM6DS3_ACC_SENSITIVITY_FOR_FS_4G   0.122  /**< Sensitivity value for 4 g full scale [mg/LSB] */
-#define LSM6DS3_ACC_SENSITIVITY_FOR_FS_8G   0.244  /**< Sensitivity value for 8 g full scale [mg/LSB] */
-#define LSM6DS3_ACC_SENSITIVITY_FOR_FS_16G  0.488  /**< Sensitivity value for 16 g full scale [mg/LSB] */
+#define LSM9DS1_ACC_SENSITIVITY_FOR_FS_2G   0.061  /**< Sensitivity value for 2 g full scale [mg/LSB] */
+#define LSM9DS1_ACC_SENSITIVITY_FOR_FS_4G   0.122  /**< Sensitivity value for 4 g full scale [mg/LSB] */
+#define LSM9DS1_ACC_SENSITIVITY_FOR_FS_8G   0.244  /**< Sensitivity value for 8 g full scale [mg/LSB] */
+#define LSM9DS1_ACC_SENSITIVITY_FOR_FS_16G  0.488  /**< Sensitivity value for 16 g full scale [mg/LSB] */
 
+
+/** @addtogroup LSM9DS1_GYRO_SENSITIVITY Gyro sensitivity values based on selected full scale
+ * @{
+ */
+#define LSM9DS1_GYRO_SENSITIVITY_FOR_FS_245DPS   08.750  /**< Sensitivity value for 245 dps full scale [mdps/LSB] */
+#define LSM9DS1_GYRO_SENSITIVITY_FOR_FS_500DPS   17.500  /**< Sensitivity value for 500 dps full scale [mdps/LSB] */
+#define LSM9DS1_GYRO_SENSITIVITY_FOR_FS_2000DPS  70.000  /**< Sensitivity value for 2000 dps full scale [mdps/LSB] */
 
 
 /** @defgroup LSM9DS1_Private_Function_Prototypes
@@ -568,21 +592,37 @@ static int LSM9DS1_XL_SetOdr(int odr);
 static int LSM9DS1_XL_SetFs(int fullscale);
 static LSM9DS1_MEM_WRITE LSM9DS1_modifyReg8(uint8_t B_Addr,uint8_t Reg, uint8_t pBuffer, uint8_t mask);
 
-uint8_t LSM9DS1_get_Odr();
+uint8_t LSM9DS1_get_Odr_XL();
+uint8_t LSM9DS1_get_Odr_G();
+
+uint8_t LSM9DS1_get_Fs_XL();
+uint8_t LSM9DS1_get_Fs_G();
+
+uint8_t LSM9DS1_get_Sens_XL();
+uint8_t LSM9DS1_get_Sens_G();
 
 LSM9DS1_State_Connection LSM9DS1_IsConnected();
-
+void LSM9DS1_XLG_TurnOff();
 
 
 LSM9DS1_XL_START LSM9DS1_XL_Start(int odr, int fs);
 
-struct  SensorAxes_t{
+
+struct  SensorXLAxes_t{
 	double axis_x;
 	double axis_y;
 	double axis_z;
 };
 
-LSM9DS1_XL_READ LSM9DS1_Read_XL(struct SensorAxes_t *acceleration,int samples);
+struct  SensorGAxes_t{
+	double axis_x;
+	double axis_y;
+	double axis_z;
+};
+
+LSM9DS1_XL_READ LSM9DS1_Read_XL(struct SensorXLAxes_t *acceleration,int samples);
+
+LSM9DS1_XLG_READ LSM9DS1_Read_XLG(struct SensorXLAxes_t *linearAcc, struct SensorGAxes_t *angularAcc, int samples);
 
 
 
