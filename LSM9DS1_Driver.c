@@ -1,11 +1,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "LSM9DS1_Driver.h"
 
-
-
-
-
-
 /** @defgroup LSM9DS1_Private_Functions
 * @{
 */
@@ -324,17 +319,17 @@ uint8_t LSM9DS1_get_Fs_XL(){
 		}
 }
 
-uint8_t LSM9DS1_get_Sens_XL(){
+double LSM9DS1_get_Sens_XL(){
 
 	uint8_t fs= LSM9DS1_get_Fs_XL();
 
 		    if (fs == LSM9DS1_CTRL_REG6_XL_FS_XL_16G)
 		    {
-		    	return LSM9DS1_ACC_SENSITIVITY_FOR_FS_16G;
+		    	return  LSM9DS1_ACC_SENSITIVITY_FOR_FS_16G;
 		    }
 		    else if (fs == LSM9DS1_CTRL_REG6_XL_FS_XL_4G)
 		    {
-		    return LSM9DS1_ACC_SENSITIVITY_FOR_FS_4G;
+		    return  LSM9DS1_ACC_SENSITIVITY_FOR_FS_4G;
 		    }
 		    else if (fs == LSM9DS1_CTRL_REG6_XL_FS_XL_8G)
 		    {
@@ -377,7 +372,7 @@ uint8_t LSM9DS1_get_Fs_G(){
 		}
 }
 
-uint8_t LSM9DS1_get_Sens_G(){
+double LSM9DS1_get_Sens_G(){
 
 	uint8_t fs= LSM9DS1_get_Fs_G();
 
@@ -460,6 +455,14 @@ static int LSM9DS1_G_SetFs(int fullscale)
 	return LSM9DS1_modifyReg8(LSM9DS1_I2C_BADD,LSM9DS1_CTRL_REG1_G,setbits,LSM9DS1_CTRL_REG1_G_FS_G_MASK );
 }
 
+
+
+
+static int LSM9SD1_SetFIFO()
+{
+	return LSM9DS1_modifyReg8(LSM9DS1_I2C_BADD,LSM9DS1_FIFO_CTRL,LSM9DS1_FIFO_CTRL_FMODE_CONT,LSM9DS1_FIFO_CTRL_FMODE_MASK );
+}
+
 /****************************************************************************
  * Name: lsm9ds1accel_start
  *
@@ -467,7 +470,7 @@ static int LSM9DS1_G_SetFs(int fullscale)
  *   Start the accelerometer.
  *
  ****************************************************************************/
- LSM9DS1_XL_START LSM9DS1_XL_Start(int odr, int fs)
+LSM9DS1_XL_START LSM9DS1_XL_Start(int odr, int fs)
 {
 
 	if(LSM9DS1_XL_SetOdr(odr))
@@ -488,7 +491,7 @@ static int LSM9DS1_G_SetFs(int fullscale)
 }
 
 
- LSM9DS1_XLG_START LSM9DS1_XLG_Start(int odr, int fsG, int fsXl )
+LSM9DS1_XLG_START LSM9DS1_XLG_Start(int odr, int fsG, int fsXl)
  {
 
 	 if(LSM9DS1_G_SetOdr(odr))
@@ -499,7 +502,7 @@ static int LSM9DS1_G_SetFs(int fullscale)
 			 {
 			 	if(LSM9DS1_G_SetFs(fsG))
 			 	  {
-			 		return LSM9DS1_XLG_START_SUCCESS;
+			 		 return LSM9SD1_SetFIFO();
 			 	   }
 			 	else
 			 	    return LSM9DS1_XLG_START_ERROR_FS;
@@ -590,8 +593,8 @@ LSM9DS1_XLG_READ LSM9DS1_Read_XLG(struct SensorXLAxes_t *linearAcc, struct Senso
 	  int16_t data=0;
 	  int8_t regadd;
 	  int i,j,k;
-	  float sensitivityXL= ( float )LSM9DS1_get_Sens_XL();
-	  float sensitivityG= (float) LSM9DS1_get_Sens_G();
+	  double sensitivityXL= (double) LSM9DS1_get_Sens_XL();
+	  double sensitivityG= (double) LSM9DS1_get_Sens_G();
 
 	  uint8_t hi;
 	  uint8_t lo;
@@ -644,9 +647,9 @@ LSM9DS1_XLG_READ LSM9DS1_Read_XLG(struct SensorXLAxes_t *linearAcc, struct Senso
 
 	     }
 	     /* Format the data. */
-	     angularAcc->axis_x = ( int32_t ) (pData[0] * sensitivityG )/1000;
-	     angularAcc->axis_y = ( int32_t ) (pData[1] * sensitivityG )/1000;
-	     angularAcc->axis_z = ( int32_t )(pData[2] * sensitivityG )/1000;
+	     angularAcc->axis_x += ( int32_t ) (pData[0] * sensitivityG )/1000;
+	     angularAcc->axis_y += ( int32_t ) (pData[1] * sensitivityG )/1000;
+	     angularAcc->axis_z += ( int32_t )(pData[2] * sensitivityG )/1000;
 
 	     regadd=LSM9DS1_OUT_X_L_XL;
 	     //read Accelerometer output
@@ -688,10 +691,20 @@ LSM9DS1_XLG_READ LSM9DS1_Read_XLG(struct SensorXLAxes_t *linearAcc, struct Senso
 
 	   	 }
 	   	     /* Format the data. */
-	   	     linearAcc->axis_x = ( int32_t ) (pData[3] * sensitivityXL);
-	   	     linearAcc->axis_y = ( int32_t ) (pData[4] * sensitivityXL);
-	   	     linearAcc->axis_z = ( int32_t )(pData[5] * sensitivityXL);
+	   	     linearAcc->axis_x += ( int32_t ) (pData[3] * sensitivityXL);
+	   	     linearAcc->axis_y += ( int32_t ) (pData[4] * sensitivityXL);
+	   	     linearAcc->axis_z += ( int32_t )(pData[5] * sensitivityXL);
 	   }
+	   angularAcc->axis_x= angularAcc->axis_x/samples;
+	   angularAcc->axis_y= angularAcc->axis_y/samples;
+	   angularAcc->axis_z= angularAcc->axis_z/samples;
+
+	   linearAcc->axis_x=  linearAcc->axis_x/samples;
+	   linearAcc->axis_y=  linearAcc->axis_y/samples;
+	   linearAcc->axis_z=  linearAcc->axis_z/samples;
+
+
+
 	    return 1;
 }
 
@@ -738,4 +751,9 @@ LSM9DS1_XLG_READ LSM9DS1_Read_XLG(struct SensorXLAxes_t *linearAcc, struct Senso
 
  }
 
+ void gotBackCursor()
+ {
+	 uint8_t cursor[9]="\033[2;0f";
+	 CDC_Transmit_FS(cursor,9);
 
+ }

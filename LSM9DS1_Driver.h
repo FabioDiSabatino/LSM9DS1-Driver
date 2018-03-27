@@ -590,6 +590,7 @@ static uint32_t lsm9ds1_midpoint(uint32_t a, uint32_t b);
 */
 static int LSM9DS1_XL_SetOdr(int odr);
 static int LSM9DS1_XL_SetFs(int fullscale);
+static int LSM9SD1_SetFIFO();
 static LSM9DS1_MEM_WRITE LSM9DS1_modifyReg8(uint8_t B_Addr,uint8_t Reg, uint8_t pBuffer, uint8_t mask);
 
 uint8_t LSM9DS1_get_Odr_XL();
@@ -598,15 +599,15 @@ uint8_t LSM9DS1_get_Odr_G();
 uint8_t LSM9DS1_get_Fs_XL();
 uint8_t LSM9DS1_get_Fs_G();
 
-uint8_t LSM9DS1_get_Sens_XL();
-uint8_t LSM9DS1_get_Sens_G();
+double LSM9DS1_get_Sens_XL();
+double LSM9DS1_get_Sens_G();
 
 LSM9DS1_State_Connection LSM9DS1_IsConnected();
 void LSM9DS1_XLG_TurnOff();
 
 
 LSM9DS1_XL_START LSM9DS1_XL_Start(int odr, int fs);
-
+LSM9DS1_XLG_START LSM9DS1_XLG_Start(int odr, int fsG, int fsXl );
 
 struct  SensorXLAxes_t{
 	double axis_x;
@@ -623,6 +624,8 @@ struct  SensorGAxes_t{
 LSM9DS1_XL_READ LSM9DS1_Read_XL(struct SensorXLAxes_t *acceleration,int samples);
 
 LSM9DS1_XLG_READ LSM9DS1_Read_XLG(struct SensorXLAxes_t *linearAcc, struct SensorGAxes_t *angularAcc, int samples);
+
+void gotBackCursor();
 
 
 
