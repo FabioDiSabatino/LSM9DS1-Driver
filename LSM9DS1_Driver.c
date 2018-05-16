@@ -159,7 +159,6 @@ static int LSM9DS1_XL_SetOdr(int odr)
 
 }
 
-
 static int LSM9DS1_G_SetOdr(int odr){
 	  uint8_t setbits;
 
@@ -391,7 +390,6 @@ double LSM9DS1_get_Sens_G(){
 
 }
 
-
 /****************************************************************************
  * Name: LSM9DS1_XL_SetFs
  *
@@ -455,13 +453,12 @@ static int LSM9DS1_G_SetFs(int fullscale)
 	return LSM9DS1_modifyReg8(LSM9DS1_I2C_BADD,LSM9DS1_CTRL_REG1_G,setbits,LSM9DS1_CTRL_REG1_G_FS_G_MASK );
 }
 
-
-
-
 static int LSM9SD1_SetFIFO()
 {
 	return LSM9DS1_modifyReg8(LSM9DS1_I2C_BADD,LSM9DS1_FIFO_CTRL,LSM9DS1_FIFO_CTRL_FMODE_CONT,LSM9DS1_FIFO_CTRL_FMODE_MASK );
 }
+
+
 
 /****************************************************************************
  * Name: lsm9ds1accel_start
@@ -490,7 +487,6 @@ LSM9DS1_XL_START LSM9DS1_XL_Start(int odr, int fs)
 
 }
 
-
 LSM9DS1_XLG_START LSM9DS1_XLG_Start(int odr, int fsG, int fsXl)
  {
 
@@ -502,7 +498,7 @@ LSM9DS1_XLG_START LSM9DS1_XLG_Start(int odr, int fsG, int fsXl)
 			 {
 			 	if(LSM9DS1_G_SetFs(fsG))
 			 	  {
-			 		 return LSM9SD1_SetFIFO();
+			 		 return LSM9DS1_XLG_START_SUCCESS;
 			 	   }
 			 	else
 			 	    return LSM9DS1_XLG_START_ERROR_FS;
@@ -517,8 +513,6 @@ LSM9DS1_XLG_START LSM9DS1_XLG_Start(int odr, int fsG, int fsXl)
 	 else
 		 return LSM9DS1_XLG_START_ERROR;
  }
-
-
 
 LSM9DS1_XL_READ LSM9DS1_Read_XL(struct SensorXLAxes_t *acceleration,int samples)
 {
@@ -587,14 +581,15 @@ LSM9DS1_XL_READ LSM9DS1_Read_XL(struct SensorXLAxes_t *acceleration,int samples)
 
 }
 
-LSM9DS1_XLG_READ LSM9DS1_Read_XLG(struct SensorXLAxes_t *linearAcc, struct SensorGAxes_t *angularAcc, int samples)
+LSM9DS1_XLG_READ LSM9DS1_Read_XLG(MFX_input_t *data_in, int samples)
 {
 	  int16_t pData[6]={0,0,0,0,0,0};
 	  int16_t data=0;
 	  int8_t regadd;
 	  int i,j,k;
-	  double sensitivityXL= (double) LSM9DS1_get_Sens_XL();
-	  double sensitivityG= (double) LSM9DS1_get_Sens_G();
+	  float divisor=1000;
+	  float sensitivityXL= (float) LSM9DS1_get_Sens_XL();
+	  float sensitivityG= (float) LSM9DS1_get_Sens_G();
 
 	  uint8_t hi;
 	  uint8_t lo;
@@ -622,7 +617,8 @@ LSM9DS1_XLG_READ LSM9DS1_Read_XLG(struct SensorXLAxes_t *linearAcc, struct Senso
 	       regadd++;
 
 	       data = ((uint16_t)hi << 8) | (uint16_t)lo;
-	       /* The value is positive */
+	       pData[j]=data;
+	       /* The value is positive
 	       if (data < 0x8000)
 	          {
 	           pData[j] = (int16_t)data;
@@ -630,7 +626,7 @@ LSM9DS1_XLG_READ LSM9DS1_Read_XLG(struct SensorXLAxes_t *linearAcc, struct Senso
 
 	       /* The value is negative, so find its absolute value by taking the
 	        * two's complement
-	        */
+	        *
 	       else if (data > 0x8000)
 	       {
 	         data = ~data + 1;
@@ -639,17 +635,17 @@ LSM9DS1_XLG_READ LSM9DS1_Read_XLG(struct SensorXLAxes_t *linearAcc, struct Senso
 
 	       /* The value is negative and can't be represented as a positive
 	        * int16_t value
-	        */
+	        *
 	       else
 	        {
 	           pData[j] = (int16_t)(-32768);
-	        }
+	        }*/
 
 	     }
 	     /* Format the data. */
-	     angularAcc->axis_x += ( int32_t ) (pData[0] * sensitivityG )/1000;
-	     angularAcc->axis_y += ( int32_t ) (pData[1] * sensitivityG )/1000;
-	     angularAcc->axis_z += ( int32_t )(pData[2] * sensitivityG )/1000;
+	     data_in->gyro[0] = ( int32_t ) (pData[0] * sensitivityG )/divisor;
+	     data_in->gyro[1] = ( int32_t ) (pData[1] * sensitivityG )/divisor;
+	     data_in->gyro[2] = ( int32_t )(pData[2] * sensitivityG )/divisor;
 
 	     regadd=LSM9DS1_OUT_X_L_XL;
 	     //read Accelerometer output
@@ -667,7 +663,9 @@ LSM9DS1_XLG_READ LSM9DS1_Read_XLG(struct SensorXLAxes_t *linearAcc, struct Senso
 	   	  regadd++;
 
 	   	  data = ((uint16_t)hi << 8) | (uint16_t)lo;
-	   	  /* The value is positive */
+	       pData[j]=data;
+
+	   	  /* The value is positive
 	   	  if (data < 0x8000)
 	   	  {
 	   	       pData[j] = (int16_t)data;
@@ -675,7 +673,7 @@ LSM9DS1_XLG_READ LSM9DS1_Read_XLG(struct SensorXLAxes_t *linearAcc, struct Senso
 
 	   	  /* The value is negative, so find its absolute value by taking the
 	   	   * two's complement
-	   	   */
+	   	   *
 	   	  else if (data > 0x8000)
 	   	  {
 	   	       data = ~data + 1;
@@ -683,35 +681,23 @@ LSM9DS1_XLG_READ LSM9DS1_Read_XLG(struct SensorXLAxes_t *linearAcc, struct Senso
 	   	  }
 	   	  /* The value is negative and can't be represented as a positive
 	   	  * int16_t value
-	   	  */
+	   	  *
 	   	  else
 	   	  {
 	   	       pData[j] = (int16_t)(-32768);
-	   	  }
+	   	  }*/
 
 	   	 }
 	   	     /* Format the data. */
-	   	     linearAcc->axis_x += ( int32_t ) (pData[3] * sensitivityXL);
-	   	     linearAcc->axis_y += ( int32_t ) (pData[4] * sensitivityXL);
-	   	     linearAcc->axis_z += ( int32_t )(pData[5] * sensitivityXL);
+	   	 	 data_in->acc[0] = ( int32_t ) (pData[3] * sensitivityXL)/divisor;
+	   	 	 data_in->acc[1] = ( int32_t ) (pData[4] * sensitivityXL)/divisor;
+	   	 	 data_in->acc[2] = ( int32_t )(pData[5] * sensitivityXL)/divisor;
 	   }
-	   angularAcc->axis_x= angularAcc->axis_x/samples;
-	   angularAcc->axis_y= angularAcc->axis_y/samples;
-	   angularAcc->axis_z= angularAcc->axis_z/samples;
-
-	   linearAcc->axis_x=  linearAcc->axis_x/samples;
-	   linearAcc->axis_y=  linearAcc->axis_y/samples;
-	   linearAcc->axis_z=  linearAcc->axis_z/samples;
-
-
-
 	    return 1;
 }
 
 
-
-
- LSM9DS1_State_Connection LSM9DS1_IsConnected()
+LSM9DS1_State_Connection LSM9DS1_IsConnected()
  {
 
  		uint8_t resultXLG[1];
@@ -751,9 +737,3 @@ LSM9DS1_XLG_READ LSM9DS1_Read_XLG(struct SensorXLAxes_t *linearAcc, struct Senso
 
  }
 
- void gotBackCursor()
- {
-	 uint8_t cursor[9]="\033[2;0f";
-	 CDC_Transmit_FS(cursor,9);
-
- }

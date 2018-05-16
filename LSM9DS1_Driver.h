@@ -12,6 +12,7 @@
 #include "stm32f4xx_hal.h"
 #include "i2c.h"
 #include "gpio.h"
+#include "motion_fx.h"
 // User include ends here
 
 
@@ -606,6 +607,7 @@ LSM9DS1_State_Connection LSM9DS1_IsConnected();
 void LSM9DS1_XLG_TurnOff();
 
 
+
 LSM9DS1_XL_START LSM9DS1_XL_Start(int odr, int fs);
 LSM9DS1_XLG_START LSM9DS1_XLG_Start(int odr, int fsG, int fsXl );
 
@@ -623,7 +625,8 @@ struct  SensorGAxes_t{
 
 LSM9DS1_XL_READ LSM9DS1_Read_XL(struct SensorXLAxes_t *acceleration,int samples);
 
-LSM9DS1_XLG_READ LSM9DS1_Read_XLG(struct SensorXLAxes_t *linearAcc, struct SensorGAxes_t *angularAcc, int samples);
+LSM9DS1_XLG_READ LSM9DS1_Read_XLG(MFX_input_t *data_in, int samples);
+
 
 void gotBackCursor();
 
