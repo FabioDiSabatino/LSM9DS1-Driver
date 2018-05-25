@@ -458,6 +458,8 @@
 /* Accelerometer and gyroscope Base address I2C */
 #define LSM9DS1_I2C_BADD						(uint8_t)0xd6
 
+#define LSM9DS1_I2C_BADD_M						(uint8_t)0x3c
+
 
 
 
@@ -512,6 +514,14 @@ typedef enum {
 	LSM9DS1_XLG_START_ERROR_ODR = 0x02U,
 	LSM9DS1_XLG_START_ERROR_FS = 0x03U,
 } LSM9DS1_XLG_START;
+
+typedef enum {
+	LSM9DS1_XLGM_START_ERROR = 0x00U,
+	LSM9DS1_XLGM_START_SUCCESS = 0x01U,
+	LSM9DS1_XLGM_START_ERROR_ODR = 0x02U,
+	LSM9DS1_XLGM_START_ERROR_FS = 0x03U,
+	LSM9DS1_M_START_ERROR_ODR = 0x04U,
+} LSM9DS1_XLGM_START;
 
 /**
 * @brief  Accelerometer read Success/Error type.
@@ -575,6 +585,16 @@ static uint32_t I2C_Timeout = 0x10000;
 #define LSM9DS1_GYRO_SENSITIVITY_FOR_FS_2000DPS  70.000  /**< Sensitivity value for 2000 dps full scale [mdps/LSB] */
 
 
+/** @addtogroup LSM9DS1_M_SENSITIVITY Magnetometer sensitivity values based on selected full scale
+ * @{
+ */
+#define LSM9DS1_M_SENSITIVITY_FOR_FS_4GAUSS   0.14  /**< Sensitivity value for 4 gauss full scale [mgauss/LSB] */
+#define LSM9DS1_M_SENSITIVITY_FOR_FS_8GAUSS   0.29  /**< Sensitivity value for 8 dps full scale [mgauss/LSB] */
+#define LSM9DS1_M_SENSITIVITY_FOR_FS_12GAUSS  0.43  /**< Sensitivity value for 12 dps full scale [magauss/LSB] */
+#define LSM9DS1_M_SENSITIVITY_FOR_FS_16GAUSS  0.58  /**< Sensitivity value for 16 dps full scale [mgauss/LSB] */
+
+
+
 /** @defgroup LSM9DS1_Private_Function_Prototypes
 * @{
 */
@@ -610,6 +630,7 @@ void LSM9DS1_XLG_TurnOff();
 
 LSM9DS1_XL_START LSM9DS1_XL_Start(int odr, int fs);
 LSM9DS1_XLG_START LSM9DS1_XLG_Start(int odr, int fsG, int fsXl );
+LSM9DS1_XLGM_START LSM9DS1_XLGM_Start(int odr,int odrM, int fsG, int fsXl, int fsM);
 
 struct  SensorXLAxes_t{
 	double axis_x;
